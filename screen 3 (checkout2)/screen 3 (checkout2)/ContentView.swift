@@ -7,82 +7,50 @@
 
 import UIKit
 
-class CheckoutViewController: UIViewController, UITableViewDataSource {
-
-    // 
-    @IBOutlet weak var tableView: UITableView!           // Table view for shopping items
-    @IBOutlet weak var totalLabel: UILabel!              // Label to show the total cost
-    @IBOutlet weak var promoCodeTextField: UITextField!  // Text field for promo code
-    @IBOutlet weak var applyPromoButton: UIButton!       // Button to apply promo code
-    @IBOutlet weak var payButton: UIButton!              // Button to proceed to payment
+class CheckoutViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
-    var items: [Item] = []                               // Array of items in the cart
+    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var totalLabel: UILabel!
+    @IBOutlet weak var checkoutButton: UIButton!
+    
+    var selectedItems: [String] = []  
+    let prices: [String: Double] = ["Hat": 12.00, "Jacket": 10.00, "T-Shirt": 8.00, "Jeans": 9.00]
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.dataSource = self           // Set the table view data source
-        loadItems()                          // Load items into the cart
-        updateTotalLabel()                   // Update the total amount when screen loads
-    }
-
-    // MARK: -
-    
-    // This function will load the items into the cart (you can replace this with API or data model)
-    func loadItems() {
-        items = [
-            Item(name: "T-Shirt", price: 20.0, quantity: 2),
-            Item(name: "Jeans", price: 40.0, quantity: 1)
-        ]
-    }
-
-    // This function calculates the total cost of the cart
-    func calculateTotal() -> Double {
-        var total = 0.0
-        for item in items {
-            total += item.price * Double(item.quantity)
-        }
-        return total
-    }
-
-    // Update the total label with the calculated total amount
-    func updateTotalLabel() {
-        let total = calculateTotal()
-        totalLabel.text = String(format: "Total: $%.2f", total) // Format the total as a currency value
-    }
-
-    //
-    
-    // Action for applying the promo code (you can add more logic here)
-    @IBAction func applyPromoCode(_ sender: UIButton) {
-        // Simple demo: print the promo code entered
-        print("Promo Code Applied: \(promoCodeTextField.text ?? "")")
-        // Example: If promo code is "DISCOUNT", apply a 10% discount
-        if promoCodeTextField.text == "DISCOUNT" {
-            let discount = 0.1 // 10% discount
-            let newTotal = calculateTotal() * (1 - discount)
-            totalLabel.text = String(format: "Total: $%.2f", newTotal)
-        }
+        
+        tableView.delegate = self
+        tableView.dataSource = self
+        
+        updateTotal()
     }
     
-    // Action for the pay button to proceed with the payment (you can trigger the payment flow here)
-    @IBAction func proceedToPayment(_ sender: UIButton) {
-        // Here you would proceed to the payment screen (use your actual payment logic)
-        print("Proceeding to payment...")
-    }
-
-    // MARK: -
-    
-    // Number of rows in the table view (one row per item in the cart)
+    // MARK: - TableView Methods
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return items.count
+        return selectedItems.count
     }
-
-    // Configuring each row in the table view to display item details
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath)
-        let item = items[indexPath.row]
-        cell.textLabel?.text = item.name
-        cell.detailTextLabel?.text = "$\(item.price) x \(item.quantity)" // Item price and quantity
+        let cell = tableView.dequeueReusableCell(withIdentifier: "CheckoutCell", for: indexPath)
+        let item = selectedItems[indexPath.row]
+        cell.textLabel?.text = "\(item) - $\(prices[item] ?? 0.00)"
         return cell
+    }
+    
+    
+    func updateTotal() {
+        let total = selectedItems.reduce(0) { (sum, item) in
+            sum + (prices[item] ?? 0.00)
+        }
+        totalLabel.text = "Total: $\(String(format: "%.2f", total))"
+    }
+    
+    
+    @IBAction func checkoutTapped(_ sender: UIButton) {
+        let alert = UIAlertController(title: "Order Placed", message: "Thank you for your purchase!", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+            self.navigationController?.popToRootViewController(animated: true)  
+        })
+        present(alert, animated: true)
     }
 }
